@@ -1,0 +1,52 @@
+.goal-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.target-txt {
+  color: #60a5fa;
+  font-size: 0.9rem;
+}
+
+.progress-bar-bg {
+  background-color: #334155;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #2563eb, #22c55e);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.progress-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.remaining-txt {
+  color: var(--red);
+}
+
+.percent-txt {
+  color: var(--text);
+  font-weight: bold;
+}
