@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Salle PS3</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #2563eb;
+            --green: #22c55e;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 12px;
+            background: linear-gradient(135deg, #1e1b4b, #0f172a);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .header h1 { margin: 0; font-size: 1.2rem; color: #60a5fa; }
+        .header p { margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted); }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Jauge de progression */
+        .progress-bar-bg {
+            background-color: #334155;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #2563eb, #22c55e);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Tableau Cotisations */
+        .member-row {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .member-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 6px; }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .month-btn {
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .month-btn.paid {
+            background-color: #15803d;
+            color: #fff;
+            border-color: var(--green);
+            font-weight: bold;
+        }
+
+        /* Formulaire Recettes */
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+        input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background-color: #0f172a;
+            color: var(--text);
+            box-sizing: border-box;
+        }
+
+        button.btn-add {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Historique Recettes */
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🎮 SALLE PS3 — TABLEAU DE BORD</h1>
+        <p>Suivi des Cotisations & Recettes de Caisse</p>
+    </div>
+
+    <!-- CARTE : SUIVI DE L'OBJECTIF -->
+    <div class="card">
+        <div class="card-title">
+            <span> Objectif Matériel (Phase 1)</span>
+            <span id="target-txt" style="color:#60a5fa;">0 / 264 000 F</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="progress-fill" class="progress-bar-fill"></div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>Reste à financer : <strong id="remaining-txt" style="color:#f87171;">264 000 F</strong></span>
+            <span id="percent-txt">0%</span>
+        </div>
+    </div>
+
+    <!-- CARTE : COTISATIONS MENSUELLES -->
+    <div class="card">
+        <div class="card-title"> Suivi des Cotisations (10 000 F/mois)</div>
+        <div id="members-container"></div>
+    </div>
+
+    <!-- CARTE : EXPLOITATION & RECETTES -->
+    <div class="card">
+        <div class="card-title"> Encaissements du Jour (Phase 2)</div>
+        <div class="form-group">
+            <label>Recette Brute (F CFA)</label>
+            <input type="number" id="daily-amount" placeholder="Ex: 8500">
+        </div>
+        <div class="form-group">
+            <label>Nom de la personne de garde</label>
+            <input type="text" id="daily-user" placeholder="Ex: Steeve">
+        </div>
+        <button class="btn-add" onclick="addDailyRevenue()">Enregistrer la Journée</button>
+
+        <div style="margin-top:15px;" class="card-title">Remboursement Matériel</div>
+        <div style="font-size:0.85rem; margin-bottom:10px;">
+            Total des recettes accumulées : <strong id="total-revenue" style="color:var(--green);">0 F CFA</strong>
+        </div>
+
+        <div class="card-title">Historique Récent</div>
+        <div class="history-list" id="history-container">
+            <div style="color:var(--text-muted); text-align:center;">Aucune recette enregistrée</div>
+        </div>
+    </div>
+
+    <script>
+        const TARGET = 264000;
+        const MEMBERS = ["Steeve", "Éphraïm", "Pamela"];
+        const MONTHS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"];
+
+        // Chargement des données ou données par défaut
+        let data = JSON.parse(localStorage.getItem("ps3_data")) || {
+            cotisations: {
+                "Steeve": [0,0,0,0,0,0,0,0],
+                "Éphraïm": [0,0,0,0,0,0,0,0],
+                "Pamela": [0,0,0,0,0,0,0,0]
+            },
+            revenues: []
+        };
+
+        function saveData() {
+            localStorage.setItem("ps3_data", JSON.stringify(data));
+            render();
+        }
+
+        function toggleCotisation(member, monthIdx) {
+            data.cotisations[member][monthIdx] = data.cotisations[member][monthIdx] === 1 ? 0 : 1;
+            saveData();
+        }
+
+        function addDailyRevenue() {
+            const amountInput = document.getElementById("daily-amount");
+            const userInput = document.getElementById("daily-user");
+            const val = parseInt(amountInput.value);
+            const user = userInput.value.trim();
+
+            if (!val || val <= 0 || !user) {
+                alert("Veuillez remplir le montant et votre nom.");
+                return;
+            }
+
+            const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+            data.revenues.unshift({ date: today, amount: val, user: user });
+            amountInput.value = "";
+            saveData();
+        }
+
+        function render() {
+            // 1. Calculs Cotisations
+            let totalCotise = 0;
+            const container = document.getElementById("members-container");
+            container.innerHTML = "";
+
+            MEMBERS.forEach(m => {
+                const row = document.createElement("div");
+                row.className = "member-row";
+                let html = `<div class="member-name">${m}</div><div class="months-grid">`;
+
+                MONTHS.forEach((monthLabel, idx) => {
+                    const isPaid = data.cotisations[m][idx] === 1;
+                    if (isPaid) totalCotise += (idx === 7 ? 8000 : 10000); // Mois 8 = 8000 F
+
+                    html += `<div class="month-btn ${isPaid ? 'paid' : ''}" onclick="toggleCotisation('${m}', ${idx})">
+                        ${monthLabel}
+                    </div>`;
+                });
+
+                html += `</div>`;
+                row.innerHTML = html;
+                container.appendChild(row);
+            });
+
+            // Mise à jour de la jauge
+            const remaining = Math.max(0, TARGET - totalCotise);
+            const pct = Math.min(100, Math.round((totalCotise / TARGET) * 100));
+
+            document.getElementById("target-txt").innerText = `${totalCotise.toLocaleString()} / ${TARGET.toLocaleString()} F`;
+            document.getElementById("remaining-txt").innerText = `${remaining.toLocaleString()} F`;
+            document.getElementById("percent-txt").innerText = `${pct}%`;
+            document.getElementById("progress-fill").style.width = `${pct}%`;
+
+            // 2. Calculs Recettes
+            let totalRev = 0;
+            const historyContainer = document.getElementById("history-container");
+            historyContainer.innerHTML = "";
+
+            if (data.revenues.length === 0) {
+                historyContainer.innerHTML = `<div style="color:var(--text-muted); text-align:center;">Aucune recette enregistrée</div>`;
+            } else {
+                data.revenues.forEach(r => {
+                    totalRev += r.amount;
+                    const item = document.createElement("div");
+                    item.className = "history-item";
+                    item.innerHTML = `<span>${r.date} — <strong>${r.user}</strong></span> <span style="color:var(--green); font-weight:bold;">+${r.amount.toLocaleString()} F</span>`;
+                    historyContainer.appendChild(item);
+                });
+            }
+
+            document.getElementById("total-revenue").innerText = `${totalRev.toLocaleString()} F CFA`;
+        }
+
+        render();
+    </script>
+</body>
+</html>
